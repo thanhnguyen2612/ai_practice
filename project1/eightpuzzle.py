@@ -109,7 +109,7 @@ class EightPuzzleState:
 
     def result(self, move):
         """
-          Returns a new eightPuzzle with the current state and blankLocation
+        Returns a new eightPuzzle with the current state and blankLocation
         updated based on the provided move.
 
         The move should be a string drawn from a list returned by legalMoves.
@@ -277,19 +277,22 @@ def createRandomEightPuzzle(moves=100):
     return puzzle
 
 if __name__ == '__main__':
-    puzzle = createRandomEightPuzzle(25)
-    print('A random puzzle:')
-    print(puzzle)
+    # puzzle = createRandomEightPuzzle(25)
+    for i in range(5):
+        puzzle = loadEightPuzzle(i)
+        print('A random puzzle:')
+        print(puzzle)
 
-    problem = EightPuzzleSearchProblem(puzzle)
-    path = search.breadthFirstSearch(problem)
-    print('BFS found a path of %d moves: %s' % (len(path), str(path)))
-    curr = puzzle
-    i = 1
-    for a in path:
-        curr = curr.result(a)
-        print('After %d move%s: %s' % (i, ("", "s")[i>1], a))
-        print(curr)
+        problem = EightPuzzleSearchProblem(puzzle)
+        path = search.dfs(problem)
+        print('BFS found a path of %d moves: %s' % (len(path), str(path)))
+        curr = puzzle
+        i = 1
+        for a in path:
+            curr = curr.result(a)
+            print('After %d move%s: %s' % (i, ("", "s")[i>1], a))
+            print(curr)
 
+            # input("Press return for the next state...")   # wait for key stroke
+            i += 1
         input("Press return for the next state...")   # wait for key stroke
-        i += 1

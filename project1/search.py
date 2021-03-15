@@ -19,6 +19,13 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+class Node:
+    def __init__(self, state, parent, action, cost=0):
+        self.state = state
+        self.parent = parent
+        self.action = action
+        self.cost = cost
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -113,12 +120,79 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_node = Node(state=problem.getStartState(), parent=None, action=None)
+    frontier = util.Stack()
+    frontier.push(start_node)
+
+    # Initialize an emply explored set
+    explored = set()
+
+    while not frontier.isEmpty():
+        node = frontier.pop()
+
+        # Found solution
+        if problem.isGoalState(node.state):
+            # states = []
+            # costs = []
+            actions = []
+            while node.parent is not None:
+                # states.append(node.state)
+                # costs.append(node.cost)
+                actions.append(node.action)
+                node = node.parent
+
+            # states.reverse()
+            # costs.reverse()
+            actions.reverse()
+            return actions
+        
+        # Mark this state node as explored
+        explored.add(node.state)
+
+        for child, action, cost in problem.expand(node.state):
+            # Only add state that hasn't been explored yet or intend to explore
+            if child not in explored:
+                child_node = Node(state=child, parent=node, action=action, cost=cost)
+                frontier.push(child_node)
+        
+    return []
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_node = Node(state=problem.getStartState(), parent=None, action=None)
+    frontier = util.Queue()
+    frontier.push(start_node)
+
+    explored = set()
+
+    while not frontier.isEmpty():
+        node = frontier.pop()
+
+        if problem.isGoalState(node.state):
+            # states = []
+            # costs = []
+            actions = []
+            while node.parent is not None:
+                # states.append(node.state)
+                # costs.append(node.cost)
+                actions.append(node.action)
+                node = node.parent
+            
+            # states.reverse()
+            # costs.reverse()
+            actions.reverse()
+            return actions
+        
+        explored.add(node.state)
+        for child, action, cost in problem.expand(node.state):
+            if child not in explored:
+                child_node = Node(state=child, parent=node, action=action, cost=cost)
+                frontier.push(child_node)
+    
+    return []
+
 
 def nullHeuristic(state, problem=None):
     """

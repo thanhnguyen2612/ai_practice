@@ -616,7 +616,7 @@ def replayGame( layout, actions, display ):
     display.initialize(state.data)
 
     for action in actions:
-            # Execute the action
+        # Execute the action
         state = state.generateChild( *action )
         # Change the display
         display.update( state.data )
@@ -635,7 +635,7 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
     for i in range( numGames ):
         beQuiet = i < numTraining
         if beQuiet:
-                # Suppress output and graphics
+            # Suppress output and graphics
             import textDisplay
             gameDisplay = textDisplay.NullGraphics()
             rules.quiet = True
