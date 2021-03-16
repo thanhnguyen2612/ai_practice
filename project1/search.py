@@ -118,6 +118,8 @@ def depthFirstSearch(problem):
 
     print("Start:", problem.getStartState())
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    @Return
+        actions: a list of actions to reach solution
     """
     "*** YOUR CODE HERE ***"
     start_node = Node(state=problem.getStartState(), parent=None, action=None)
@@ -132,19 +134,19 @@ def depthFirstSearch(problem):
 
         # Found solution
         if problem.isGoalState(node.state):
-            states = []
+            # states = []
             # costs = []
             actions = []
             while node.parent is not None:
-                states.append(node.state)
+                # states.append(node.state)
                 # costs.append(node.cost)
                 actions.append(node.action)
                 node = node.parent
 
-            states.reverse()
+            # states.reverse()
             # costs.reverse()
             actions.reverse()
-            return states, actions
+            return actions
         
         # Mark this state node as explored
         explored.add(node.state)
@@ -171,19 +173,19 @@ def breadthFirstSearch(problem):
         node = frontier.pop()
 
         if problem.isGoalState(node.state):
-            states = []
+            # states = []
             # costs = []
             actions = []
             while node.parent is not None:
-                states.append(node.state)
+                # states.append(node.state)
                 # costs.append(node.cost)
                 actions.append(node.action)
                 node = node.parent
             
-            states.reverse()
+            # states.reverse()
             # costs.reverse()
             actions.reverse()
-            return states, actions
+            return actions
         
         explored.add(node.state)
         for child, action, cost in problem.expand(node.state):

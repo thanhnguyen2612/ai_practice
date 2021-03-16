@@ -50,11 +50,11 @@ class MapNavigationProblem(search.SearchProblem):
     """
     def __init__(self, map, from_city, to_city):
         self.map = map
-        self.start_city = from_city
+        self.current_city = from_city
         self.destination = to_city
     
     def getStartState(self):
-        return self.start_city
+        return self.current_city
     
     def isGoalState(self, state):
         return state == self.destination
@@ -77,6 +77,12 @@ class MapNavigationProblem(search.SearchProblem):
 
     def getCostOfActionSequence(self, actions):
         return sum(action.cost for action in actions)
+    
+    def getNextCity(self, road):
+        if not road.connect(self.current_city):
+            raise Exception("Invalid solution")
+        self.current_city = road.city1 if road.city2 == self.current_city else road.city2
+        return self.current_city
 
 def loadMap():
     map = Map()
@@ -111,10 +117,18 @@ if __name__ == '__main__':
     map = loadMap()
     map_navigation_problem = MapNavigationProblem(map, sys.argv[1], sys.argv[2])
     if len(sys.argv) == 4 and sys.argv[3] == 'dfs':
-        path, actions = search.dfs(map_navigation_problem)
+        actions = search.dfs(map_navigation_problem)
         cost = map_navigation_problem.getCostOfActionSequence(actions)
-        print(f"DFS found a path of {len(path)} moves with {cost} costs: {str(path)}")
+        print(f"DFS found a path of {len(actions)} moves with {cost} costs")
+        city = [map_navigation_problem.current_city]
+        for a in actions:
+            city.append(map_navigation_problem.getNextCity(a))
+        print('-'.join(city))
     else:
-        path, actions = search.bfs(map_navigation_problem)
+        actions = search.bfs(map_navigation_problem)
         cost = map_navigation_problem.getCostOfActionSequence(actions)
-        print(f"BFS found a path of {len(path)} moves with {cost} costs: {str(path)}")
+        print(f"BFS found a path of {len(actions)} moves with {cost} costs")
+        city = [map_navigation_problem.current_city]
+        for a in actions:
+            city.append(map_navigation_problem.getNextCity(a))
+        print('-'.join(city))
