@@ -132,19 +132,19 @@ def depthFirstSearch(problem):
 
         # Found solution
         if problem.isGoalState(node.state):
-            # states = []
+            states = []
             # costs = []
             actions = []
             while node.parent is not None:
-                # states.append(node.state)
+                states.append(node.state)
                 # costs.append(node.cost)
                 actions.append(node.action)
                 node = node.parent
 
-            # states.reverse()
+            states.reverse()
             # costs.reverse()
             actions.reverse()
-            return actions
+            return states, actions
         
         # Mark this state node as explored
         explored.add(node.state)
@@ -171,19 +171,19 @@ def breadthFirstSearch(problem):
         node = frontier.pop()
 
         if problem.isGoalState(node.state):
-            # states = []
+            states = []
             # costs = []
             actions = []
             while node.parent is not None:
-                # states.append(node.state)
+                states.append(node.state)
                 # costs.append(node.cost)
                 actions.append(node.action)
                 node = node.parent
             
-            # states.reverse()
+            states.reverse()
             # costs.reverse()
             actions.reverse()
-            return actions
+            return states, actions
         
         explored.add(node.state)
         for child, action, cost in problem.expand(node.state):
