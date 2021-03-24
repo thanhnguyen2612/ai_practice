@@ -19,13 +19,6 @@ Pacman agents (in searchAgents.py).
 
 import util
 
-class Node:
-    def __init__(self, state, parent, action, cost=0):
-        self.state = state
-        self.parent = parent
-        self.action = action
-        self.cost = cost
-
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -122,79 +115,20 @@ def depthFirstSearch(problem):
         actions: a list of actions to reach solution
     """
     "*** YOUR CODE HERE ***"
-    start_node = Node(state=problem.getStartState(), parent=None, action=None)
-    frontier = util.Stack()
-    frontier.push(start_node)
-
-    # Initialize an emply explored set
-    explored = set()
-
-    while not frontier.isEmpty():
-        node = frontier.pop()
-
-        # Found solution
-        if problem.isGoalState(node.state):
-            # states = []
-            # costs = []
-            actions = []
-            while node.parent is not None:
-                # states.append(node.state)
-                # costs.append(node.cost)
-                actions.append(node.action)
-                node = node.parent
-
-            # states.reverse()
-            # costs.reverse()
-            actions.reverse()
-            return actions
-        
-        # Mark this state node as explored
-        explored.add(node.state)
-
-        for child, action, cost in problem.expand(node.state):
-            # Only add state that hasn't been explored yet or intend to explore
-            if child not in explored:
-                child_node = Node(state=child, parent=node, action=action, cost=cost)
-                frontier.push(child_node)
-        
-    return []
-
+    searchAgent = GraphSearch(problem, util.Stack())
+    actions = searchAgent.search()
+    costs = searchAgent.getCostOfActionSequence(actions)
+    print(f"DFS found a path of {len(actions)} moves with {costs} costs")
+    return actions
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    start_node = Node(state=problem.getStartState(), parent=None, action=None)
-    frontier = util.Queue()
-    frontier.push(start_node)
-
-    explored = set()
-
-    while not frontier.isEmpty():
-        node = frontier.pop()
-
-        if problem.isGoalState(node.state):
-            # states = []
-            # costs = []
-            actions = []
-            while node.parent is not None:
-                # states.append(node.state)
-                # costs.append(node.cost)
-                actions.append(node.action)
-                node = node.parent
-            
-            # states.reverse()
-            # costs.reverse()
-            actions.reverse()
-            return actions
-        
-        explored.add(node.state)
-        for child, action, cost in problem.expand(node.state):
-            if child not in explored:
-                child_node = Node(state=child, parent=node, action=action, cost=cost)
-                frontier.push(child_node)
-    
-    return []
-
+    searchAgent = GraphSearch(problem, util.Queue())
+    actions = searchAgent.search()
+    costs = searchAgent.getCostOfActionSequence(actions)
+    print(f"BFS found a path of {len(actions)} moves with {costs} costs")
+    return actions
 
 def nullHeuristic(state, problem=None):
     """
@@ -213,3 +147,74 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
 astar = aStarSearch
+
+class Node:
+    def __init__(self, state, parent, action, cost=0):
+        self.state = state
+        self.parent = parent
+        self.action = action
+        self.cost = cost
+
+class GraphSearch(SearchProblem):
+    def __init__(self, problem, fringe, heuristic=nullHeuristic):
+        self.problem = problem
+        self.fringe = fringe
+        self.explored = set()
+        self.heuristic = heuristic
+    
+    def search(self):
+        start_node = Node(state=self.getStartState(), parent=None, action=None)
+        self.fringe.push(start_node)
+
+        while not self.fringe.isEmpty():
+            node = self.fringe.pop()
+
+            if self.isGoalState(node.state):
+                actions = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    node = node.parent
+
+                actions.reverse()
+                return actions
+            
+            self.explored.add(node.state)
+            for child, action, cost in self.expand(node.state):
+                if child not in self.explored:
+                    child_node = Node(state=child, parent=node, action=action, cost=cost)
+                    self.fringe.push(child_node)
+        return []
+
+    def getStartState(self):
+        return self.problem
+
+    def isGoalState(self, state):
+        return state.isGoal()
+
+    def expand(self, state):
+        child = []
+        for action in self.getActions(state):
+            next_state = self.getNextState(state, action)
+            child.append((next_state, action, self.getActionCost(state, action, next_state)))
+        return child
+
+    def getActions(self, state):
+        return state.legalMoves()
+
+    def getActionCost(self, state, action, next_state):
+        assert next_state == state.result(action), (
+            "getActionCost() called on incorrect next state.")
+        return action.cost
+
+    def getNextState(self, state, action):
+        assert action in self.getActions(state), (
+            "getNextState() called on incorrect action")
+        return state.result(action)
+
+    def getCostOfActionSequence(self, actions):
+        costs = 0
+        cur = self.problem
+        for action in actions:
+            costs += self.getActionCost(cur, action, self.getNextState(cur, action))
+            cur = self.getNextState(cur, action)
+        return costs

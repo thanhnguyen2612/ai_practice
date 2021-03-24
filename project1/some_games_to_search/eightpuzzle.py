@@ -21,6 +21,16 @@ import search
 import random
 
 # Module Classes
+class Action:
+    def __init__(self, move):
+        self.move = move
+        self.cost = 1
+    
+    def __eq__(self, other):
+        return self.move == other.move and self.cost == other.cost
+    
+    def __str__(self):
+        return self.move
 
 class EightPuzzleState:
     """
@@ -110,9 +120,9 @@ class EightPuzzleState:
             moves.append('left')
         if(col != 2):
             moves.append('right')
-        return moves
+        return list(map(lambda x: Action(x), moves))
 
-    def result(self, move):
+    def result(self, action):
         """
         Returns a new eightPuzzle with the current state and blankLocation
         updated based on the provided move.
@@ -125,16 +135,16 @@ class EightPuzzleState:
         it returns a new object.
         """
         row, col = self.blankLocation
-        if(move == 'up'):
+        if(action.move == 'up'):
             newrow = row - 1
             newcol = col
-        elif(move == 'down'):
+        elif(action.move == 'down'):
             newrow = row + 1
             newcol = col
-        elif(move == 'left'):
+        elif(action.move == 'left'):
             newrow = row
             newcol = col - 1
-        elif(move == 'right'):
+        elif(action.move == 'right'):
             newrow = row
             newcol = col + 1
         else:
@@ -188,58 +198,6 @@ class EightPuzzleState:
     def __str__(self):
         return self.__getAsciiString()
 
-# TODO: Implement The methods in this class
-
-class EightPuzzleSearchProblem(search.SearchProblem):
-    """
-      Implementation of a SearchProblem for the  Eight Puzzle domain
-
-      Each state is represented by an instance of an eightPuzzle.
-    """
-    def __init__(self,puzzle):
-        "Creates a new EightPuzzleSearchProblem which stores search information."
-        self.puzzle = puzzle
-
-    def getStartState(self):
-        return puzzle
-
-    def isGoalState(self,state):
-        return state.isGoal()
-
-    def expand(self,state):
-        """
-          Returns list of (child, action, stepCost) pairs where
-          each child is either left, right, up, or down
-          from the original state and the cost is 1.0 for each
-        """
-        child = []
-        for a in self.getActions(state):
-            next_state = self.getNextState(state, a)
-            child.append((next_state, a, self.getActionCost(state, a, next_state)))
-        return child
-
-    def getActions(self, state):
-        return state.legalMoves()
-
-    def getActionCost(self, state, action, next_state):
-        assert next_state == state.result(action), (
-            "getActionCost() called on incorrect next state.")
-        return 1
-
-    def getNextState(self, state, action):
-        assert action in state.legalMoves(), (
-            "getNextState() called on incorrect action")
-        return state.result(action)
-
-    def getCostOfActionSequence(self, actions):
-        """
-         actions: A list of actions to take
-
-        This method returns the total cost of a particular sequence of actions.  The sequence must
-        be composed of legal moves
-        """
-        return len(actions)
-
 EIGHT_PUZZLE_DATA = [[1, 0, 2, 3, 4, 5, 6, 7, 8],
                      [1, 7, 8, 2, 3, 4, 5, 6, 0],
                      [4, 3, 2, 7, 0, 5, 1, 6, 8],
@@ -288,9 +246,9 @@ if __name__ == '__main__':
         print('A random puzzle:')
         print(puzzle)
 
-        problem = EightPuzzleSearchProblem(puzzle)
-        path = search.bfs(problem)
-        print('BFS found a path of %d moves: %s' % (len(path), str(path)))
+        # problem = EightPuzzleSearchProblem(puzzle)
+        path = search.bfs(puzzle)
+        # print('BFS found a path of %d moves: %s' % (len(path), str(path)))
         curr = puzzle
         i = 1
         for a in path:

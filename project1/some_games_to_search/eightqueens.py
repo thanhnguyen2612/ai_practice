@@ -7,6 +7,21 @@ sys.path.insert(0,parentdir)
 import search
 import random
 
+class Action:
+    def __init__(self, i, j):
+        self.i = i
+        self.j = j
+        self.cost = 1
+    
+    def __eq__(self, other):
+        return self.i == other.i and self.j == other.j and self.cost == other.cost
+
+    def __hash__(self):
+        return hash(self.i + 13*self.j + self.cost)
+
+    def __str__(self):
+        return f"({self.i}-{self.j})"
+
 class BoardState:
     """
     Implement 8x8 Board for 8 queens
@@ -42,10 +57,11 @@ class BoardState:
         if self.isSafe(queen_pos):
             self.queens.add(queen_pos)
 
-    def result(self, queen_pos):
+    def result(self, action):
         new_board = BoardState(self.size)
         queens = self.queens.copy()
         [new_board.addQueen(queen) for queen in self.queens]
+        queen_pos = (action.i, action.j)
         new_board.addQueen(queen_pos)
         return new_board
 
@@ -74,38 +90,8 @@ class BoardState:
         for i in range(self.size):
             for j in range(self.size):
                 if self.isSafe((i, j)):
-                    moves.append((i, j))
+                    moves.append(Action(i, j))
         return moves
-
-class EightQueensProblem(search.SearchProblem):
-    """
-    Implement 8 queens search problem
-    """
-    def __init__(self, board):
-        self.board = board
-
-    def getStartState(self):
-        return self.board
-
-    def isGoalState(self, state):
-        return state.isGoal()
-
-    def expand(self, state):
-        for queen_pos in self.getActions(state):
-            next_state = self.getNextState(state, queen_pos)
-            yield (next_state, queen_pos, self.getActionCost(state, queen_pos, next_state))
-
-    def getActions(self, state):
-        return state.legalMoves()
-
-    def getActionCost(self, state, action, next_state):
-        return 1
-
-    def getNextState(self, state, action):
-        return state.result(action)
-
-    def getCostOfActionSequence(self, actions):
-        return len(actions)
 
 if __name__ == "__main__":
     board = BoardState()
@@ -113,9 +99,8 @@ if __name__ == "__main__":
     print('Add a random queen:')
     print(board)
     
-    problem = EightQueensProblem(board)
-    actions = search.dfs(problem)
-    print('DFS found a path of %d moves: %s' % (len(actions), str(actions)))
+    actions = search.dfs(board) 
+    print('DFS found a path of %d moves: %s' % (len(actions), [str(action) for action in actions]))
     curr = board
     for queen_pos in actions:
         input("Press return for the next state...")   # wait for key stroke

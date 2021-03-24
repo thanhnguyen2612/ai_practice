@@ -6,6 +6,14 @@ sys.path.insert(0,parentdir)
 
 import search
 
+class Action:
+    def __init__(self, i):
+        self.i = i
+        self.cost = 1
+    def __eq__(self, other):
+        return self.i == other.i and self.cost == other.cost
+    def __str__(self):
+        return str(i)
 class RiverCrossingState:
     """
     Implement state of farmer game: 4 characters (farmer, wolf, goat, cabbage)
@@ -58,14 +66,15 @@ class RiverCrossingState:
         return True
     
     def legalMoves(self):
-        return [i for i, bit in enumerate(self.riverside) 
-                    if self.riverside[i] == self.riverside[0]
-                        and self.result(i).isSafe()]
+        return [Action(i) for i, bit in enumerate(self.riverside) 
+                    if bit == self.riverside[0]
+                        and self.result(Action(i)).isSafe()]
     
-    def result(self, char_idx):
+    def result(self, action):
         """
         Index of the character bring to the otherside
         """
+        char_idx = action.i
         if self.riverside[0] != self.riverside[char_idx]:
             raise Exception(f"{self.CHARS[char_idx]} cannot boat by itself")
 
@@ -81,43 +90,13 @@ class RiverCrossingState:
             new_game.riverside[0] = min(new_game.riverside[0] + 1, 1)
             new_game.riverside[char_idx] = min(new_game.riverside[char_idx] + 1, 1)
         return new_game
-
-class RiverCrossingProblem(search.SearchProblem):
-    def __init__(self, game_state):
-        self.start_state = game_state
-
-    def getStartState(self):
-        return self.start_state
-
-    def isGoalState(self, state):
-        return state.isGoal()
-
-    def expand(self, state):
-        for action in self.getActions(state):
-            next_state = self.getNextState(state, action)
-            yield (next_state, action, self.getActionCost(state, action, next_state))
-
-    def getActions(self, state):
-        return state.legalMoves()
-
-    def getActionCost(self, state, action, next_state):
-        assert next_state == state.result(action), (
-            "getActionCost() called on incorrect next state.")
-        return 1
-
-    def getNextState(self, state, action):
-        return state.result(action)
-
-    def getCostOfActionSequence(self, actions):
-        return len(actions)
-
     
 if __name__ == "__main__":
     puzzle = RiverCrossingState()
     
-    problem = RiverCrossingProblem(puzzle)
-    actions = search.bfs(problem)
-    print('BFS found a path of %d moves: %s' % (len(actions), str(actions)))
+    # problem = RiverCrossingProblem(puzzle)
+    actions = search.bfs(puzzle)
+    # print('BFS found a path of %d moves: %s' % (len(actions), str(actions)))
     
     curr = puzzle
     for action in actions:
