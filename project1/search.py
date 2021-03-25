@@ -19,6 +19,8 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+REVERSE_PUSH = False
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -117,18 +119,33 @@ def depthFirstSearch(problem):
     "*** YOUR CODE HERE ***"
     graph = GraphSearch(problem, util.Stack())
     actions = graph.search()
-    costs = graph.getCostOfActionSequence(actions)
-    print(f"DFS found a path of {len(actions)} moves with {costs} costs")
     return actions
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     graph = GraphSearch(problem, util.Queue())
     actions = graph.search()
-    costs = graph.getCostOfActionSequence(actions)
-    print(f"BFS found a path of {len(actions)} moves with {costs} costs")
     return actions
+
+def uniformCostSearch(problem):
+    graph = GraphSearch(problem, util.PriorityQueue())
+    actions = graph.search()
+    return actions
+
+def depthLimitSearch(problem):
+    graph = GraphSearch(problem, util.Stack())
+    actions = graph.search(3)
+    return actions
+
+def iterativeDeepeningSearch(problem):
+    limit = 100
+    for depth in range(limit):
+        graph = GraphSearch(problem, util.Stack())
+        actions = graph.search(depth)
+        if actions:
+            return actions
 
 def nullHeuristic(state, problem=None):
     """
@@ -140,18 +157,21 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    graph = GraphSearch(problem, util.PriorityQueue(), heuristic)
+    actions = graph.aStarSearch()
+    return actions
 
-def depthLimitSearch(problem):
-    graph = GraphSearch(problem, util.Stack())
-    actions = graph.depthLimitSearch(7)
-    # costs = searchAgent.getCostOfActionSequence(actions)
-    print(f"DLS found a path of {len(actions)} moves with {costs} costs")
+def bestFirstSearch(problem, heuristic=nullHeuristic):
+    graph = GraphSearch(problem, util.PriorityQueue(), heuristic)
+    actions = graph.bestFirstSearch()
     return actions
 
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
+ucs = uniformCostSearch
+dls = depthLimitSearch
+ids = iterativeDeepeningSearch
 astar = aStarSearch
 
 class Node:
@@ -161,92 +181,66 @@ class Node:
         self.action = action
         self.depth = depth
         self.cost = cost
+    
+    def __eq__(self, other):
+        return self.state == other.state and self.parent == other.parent \
+            and self.action == other.action and self.depth == other.depth \
+            and self.cost == other.cost
+    
+    def __hash__(self):
+        return hash(self.state) + hash(self.parent) + hash(self.action) + self.depth + self.cost
 
-class GraphSearch(SearchProblem):
+# Generic graph search
+class GraphSearch:
     def __init__(self, problem, fringe, heuristic=nullHeuristic):
         self.problem = problem
         self.fringe = fringe
         self.explored = set()
         self.heuristic = heuristic
+        self.algorithm = None
     
-    def depthLimitSearch(self, limit):
-        start_node = Node(state=self.getStartState(), parent=None, action=None)
-        self.fringe.push(start_node)
+    def search(self, limit=-1):
+        start_node = Node(state=self.problem.getStartState(), parent=None, action=None)
+        # self.fringe.push(start_node)
+        self.pushFringe(start_node)
 
         while not self.fringe.isEmpty():
             node = self.fringe.pop()
 
-            if self.isGoalState(node.state):
+            if self.problem.isGoalState(node.state):
                 actions = []
                 while node.parent is not None:
                     actions.append(node.action)
                     node = node.parent
-
                 actions.reverse()
                 return actions
+            elif limit >= 0 and node.depth == limit:     # Cutoff
+                self.explored.add(node.state)
+                continue
             
             self.explored.add(node.state)
-            for child, action, cost in self.expand(node.state):
+            for child, action, cost in self.problem.expand(node.state):
                 if child not in self.explored:
                     child_node = Node(state=child, parent=node, action=action, 
-                                      depth=node.depth+1, cost=node.cost+cost)
-                    self.fringe.push(child_node)
+                                            depth=node.depth + 1, cost=node.cost + cost)
+                    self.pushFringe(child_node)
         return []
+    
+    def pushFringe(self, node):
+        if isinstance(self.fringe, util.PriorityQueue):
+            if self.algorithm == 'aStar':
+                self.fringe.push(node, node.cost + self.heuristic(node.state, self.problem))
+            elif self.algorithm == 'bfs':
+                self.fringe.push(node, self.heuristic(node.state, self.problem))
+            else:
+                self.fringe.push(node, node.cost)
+        else:
+            self.fringe.push(node)
+    
+    def bestFirstSearch(self):
+        self.algorithm = 'bfs'
+        return self.search()
 
-    def search(self):
-        start_node = Node(state=self.getStartState(), parent=None, action=None)
-        self.fringe.push(start_node)
-
-        while not self.fringe.isEmpty():
-            node = self.fringe.pop()
-
-            if self.isGoalState(node.state):
-                actions = []
-                while node.parent is not None:
-                    actions.append(node.action)
-                    node = node.parent
-
-                actions.reverse()
-                return actions
-            
-            self.explored.add(node.state)
-            for child, action, cost in self.expand(node.state):
-                if child not in self.explored:
-                    child_node = Node(state=child, parent=node, action=action, 
-                                      depth=node.depth+1, cost=node.cost+cost)
-                    self.fringe.push(child_node)
-        return []
-
-    def getStartState(self):
-        return self.problem
-
-    def isGoalState(self, state):
-        return self.problem.isGoalState(state)
-
-    def expand(self, state):
-        child = []
-        for action in self.getActions(state):
-            next_state = self.getNextState(state, action)
-            child.append((next_state, action, self.getActionCost(state, action, next_state)))
-        return child
-
-    def getActions(self, state):
-        return self.problem.getActions(state)
-
-    def getActionCost(self, state, action, next_state):
-        assert next_state == state.result(action), (
-            "getActionCost() called on incorrect next state.")
-        return action.cost
-
-    def getNextState(self, state, action):
-        assert action in self.getActions(state), (
-            "getNextState() called on incorrect action")
-        return state.result(action)
-
-    def getCostOfActionSequence(self, actions):
-        costs = 0
-        cur = self.problem
-        for action in actions:
-            costs += self.getActionCost(cur, action, self.getNextState(cur, action))
-            cur = self.getNextState(cur, action)
-        return costs
+    def aStarSearch(self):
+        self.algorithm = 'aStar'
+        return self.search()
