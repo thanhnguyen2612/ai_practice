@@ -115,18 +115,18 @@ def depthFirstSearch(problem):
         actions: a list of actions to reach solution
     """
     "*** YOUR CODE HERE ***"
-    searchAgent = GraphSearch(problem, util.Stack())
-    actions = searchAgent.search()
-    costs = searchAgent.getCostOfActionSequence(actions)
+    graph = GraphSearch(problem, util.Stack())
+    actions = graph.search()
+    costs = graph.getCostOfActionSequence(actions)
     print(f"DFS found a path of {len(actions)} moves with {costs} costs")
     return actions
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    searchAgent = GraphSearch(problem, util.Queue())
-    actions = searchAgent.search()
-    costs = searchAgent.getCostOfActionSequence(actions)
+    graph = GraphSearch(problem, util.Queue())
+    actions = graph.search()
+    costs = graph.getCostOfActionSequence(actions)
     print(f"BFS found a path of {len(actions)} moves with {costs} costs")
     return actions
 
@@ -142,6 +142,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
+def depthLimitSearch(problem):
+    graph = GraphSearch(problem, util.Stack())
+    actions = graph.depthLimitSearch(7)
+    # costs = searchAgent.getCostOfActionSequence(actions)
+    print(f"DLS found a path of {len(actions)} moves with {costs} costs")
+    return actions
 
 # Abbreviations
 bfs = breadthFirstSearch
@@ -149,10 +155,11 @@ dfs = depthFirstSearch
 astar = aStarSearch
 
 class Node:
-    def __init__(self, state, parent, action, cost=0):
+    def __init__(self, state, parent, action, depth=0, cost=0):
         self.state = state
         self.parent = parent
         self.action = action
+        self.depth = depth
         self.cost = cost
 
 class GraphSearch(SearchProblem):
@@ -162,6 +169,30 @@ class GraphSearch(SearchProblem):
         self.explored = set()
         self.heuristic = heuristic
     
+    def depthLimitSearch(self, limit):
+        start_node = Node(state=self.getStartState(), parent=None, action=None)
+        self.fringe.push(start_node)
+
+        while not self.fringe.isEmpty():
+            node = self.fringe.pop()
+
+            if self.isGoalState(node.state):
+                actions = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    node = node.parent
+
+                actions.reverse()
+                return actions
+            
+            self.explored.add(node.state)
+            for child, action, cost in self.expand(node.state):
+                if child not in self.explored:
+                    child_node = Node(state=child, parent=node, action=action, 
+                                      depth=node.depth+1, cost=node.cost+cost)
+                    self.fringe.push(child_node)
+        return []
+
     def search(self):
         start_node = Node(state=self.getStartState(), parent=None, action=None)
         self.fringe.push(start_node)
@@ -181,7 +212,8 @@ class GraphSearch(SearchProblem):
             self.explored.add(node.state)
             for child, action, cost in self.expand(node.state):
                 if child not in self.explored:
-                    child_node = Node(state=child, parent=node, action=action, cost=cost)
+                    child_node = Node(state=child, parent=node, action=action, 
+                                      depth=node.depth+1, cost=node.cost+cost)
                     self.fringe.push(child_node)
         return []
 
@@ -189,7 +221,7 @@ class GraphSearch(SearchProblem):
         return self.problem
 
     def isGoalState(self, state):
-        return state.isGoal()
+        return self.problem.isGoalState(state)
 
     def expand(self, state):
         child = []
@@ -199,7 +231,7 @@ class GraphSearch(SearchProblem):
         return child
 
     def getActions(self, state):
-        return state.legalMoves()
+        return self.problem.getActions(state)
 
     def getActionCost(self, state, action, next_state):
         assert next_state == state.result(action), (
