@@ -19,12 +19,23 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+REVERSE_PUSH = False
+
 class Node:
-    def __init__(self, state, parent, action, cost=0):
+    def __init__(self, state, parent, action, depth=0, cost=0):
         self.state = state
         self.parent = parent
         self.action = action
+        self.depth = depth
         self.cost = cost
+    
+    def __eq__(self, other):
+        return self.state == other.state and self.parent == other.parent \
+            and self.action == other.action and self.depth == other.depth \
+            and self.cost == other.cost
+    
+    def __hash__(self):
+        return hash(self.state) + hash(self.parent) + hash(self.action) + self.depth + self.cost
 
 class SearchProblem:
     """
@@ -122,79 +133,22 @@ def depthFirstSearch(problem):
         actions: a list of actions to reach solution
     """
     "*** YOUR CODE HERE ***"
-    start_node = Node(state=problem.getStartState(), parent=None, action=None)
-    frontier = util.Stack()
-    frontier.push(start_node)
-
-    # Initialize an emply explored set
-    explored = set()
-
-    while not frontier.isEmpty():
-        node = frontier.pop()
-
-        # Found solution
-        if problem.isGoalState(node.state):
-            # states = []
-            # costs = []
-            actions = []
-            while node.parent is not None:
-                # states.append(node.state)
-                # costs.append(node.cost)
-                actions.append(node.action)
-                node = node.parent
-
-            # states.reverse()
-            # costs.reverse()
-            actions.reverse()
-            return actions
-        
-        # Mark this state node as explored
-        explored.add(node.state)
-
-        for child, action, cost in problem.expand(node.state):
-            # Only add state that hasn't been explored yet or intend to explore
-            if child not in explored:
-                child_node = Node(state=child, parent=node, action=action, cost=cost)
-                frontier.push(child_node)
-        
-    return []
+    graph = GraphSearch(problem, util.Stack())
+    actions = graph.search()
+    return actions
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    start_node = Node(state=problem.getStartState(), parent=None, action=None)
-    frontier = util.Queue()
-    frontier.push(start_node)
+    graph = GraphSearch(problem, util.Queue())
+    actions = graph.search()
+    return actions
 
-    explored = set()
-
-    while not frontier.isEmpty():
-        node = frontier.pop()
-
-        if problem.isGoalState(node.state):
-            # states = []
-            # costs = []
-            actions = []
-            while node.parent is not None:
-                # states.append(node.state)
-                # costs.append(node.cost)
-                actions.append(node.action)
-                node = node.parent
-            
-            # states.reverse()
-            # costs.reverse()
-            actions.reverse()
-            return actions
-        
-        explored.add(node.state)
-        for child, action, cost in problem.expand(node.state):
-            if child not in explored:
-                child_node = Node(state=child, parent=node, action=action, cost=cost)
-                frontier.push(child_node)
-    
-    return []
-
+def uniformCostSearch(problem):
+    graph = GraphSearch(problem, util.PriorityQueue())
+    actions = graph.search()
+    return actions
 
 def nullHeuristic(state, problem=None):
     """
@@ -212,4 +166,43 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
+ucs = uniformCostSearch
 astar = aStarSearch
+
+
+# Generic graph search
+class GraphSearch:
+    def __init__(self, problem, fringe, heuristic=nullHeuristic):
+        self.problem = problem
+        self.fringe = fringe
+        self.explored = set()
+        self.heuristic = heuristic
+    
+    def search(self):
+        start_node = Node(state=self.problem.getStartState(), parent=None, action=None)
+        # self.fringe.push(start_node)
+        self.pushFringe(start_node)
+
+        while not self.fringe.isEmpty():
+            node = self.fringe.pop()
+
+            if self.problem.isGoalState(node.state):
+                actions = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    node = node.parent
+                actions.reverse()
+                return actions
+            
+            self.explored.add(node.state)
+            for child, action, cost in self.problem.expand(node.state):
+                child_node = Node(state=child, parent=node, action=action, 
+                                        depth=node.depth + 1, cost=node.cost + cost)
+                self.pushFringe(child_node)
+        return []
+    
+    def pushFringe(self, node):
+        if isinstance(self.fringe, util.PriorityQueue):
+            self.fringe.push(node, node.cost)
+        elif node.state not in self.explored:
+            self.fringe.push(node)
