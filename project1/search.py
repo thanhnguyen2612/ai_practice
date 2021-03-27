@@ -134,9 +134,9 @@ def uniformCostSearch(problem):
     actions = graph.search()
     return actions
 
-def depthLimitSearch(problem):
+def depthLimitSearch(problem, limit=3):
     graph = GraphSearch(problem, util.Stack())
-    actions = graph.search(3)
+    actions = graph.search(limit)
     return actions
 
 def iterativeDeepeningSearch(problem):
@@ -189,6 +189,9 @@ class Node:
     
     def __hash__(self):
         return hash(self.state) + hash(self.parent) + hash(self.action) + self.depth + self.cost
+    
+    def __str__(self):
+        return f"{self.parent}->{self.state}"
 
 # Generic graph search
 class GraphSearch:
