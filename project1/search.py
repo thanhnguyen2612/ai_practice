@@ -117,33 +117,33 @@ def depthFirstSearch(problem):
         actions: a list of actions to reach solution
     """
     "*** YOUR CODE HERE ***"
-    graph = GraphSearch(problem, util.Stack())
-    actions = graph.search()
+    model = GenericSearch(problem, util.Stack())
+    actions = model.search()
     return actions
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    graph = GraphSearch(problem, util.Queue())
-    actions = graph.search()
+    model = GenericSearch(problem, util.Queue())
+    actions = model.search()
     return actions
 
 def uniformCostSearch(problem):
-    graph = GraphSearch(problem, util.PriorityQueue())
-    actions = graph.search()
+    model = GenericSearch(problem, util.PriorityQueue())
+    actions = model.search()
     return actions
 
 def depthLimitSearch(problem, limit=3):
-    graph = GraphSearch(problem, util.Stack())
-    actions = graph.search(limit)
+    model = GenericSearch(problem, util.Stack())
+    actions = model.search(limit)
     return actions
 
 def iterativeDeepeningSearch(problem):
     limit = 100
     for depth in range(limit):
-        graph = GraphSearch(problem, util.Stack())
-        actions = graph.search(depth)
+        model = GenericSearch(problem, util.Stack())
+        actions = model.search(depth)
         if actions:
             return actions
 
@@ -157,13 +157,13 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    graph = GraphSearch(problem, util.PriorityQueue(), heuristic)
-    actions = graph.aStarSearch()
+    model = GenericSearch(problem, util.PriorityQueue(), heuristic)
+    actions = model.aStarSearch()
     return actions
 
 def bestFirstSearch(problem, heuristic=nullHeuristic):
-    graph = GraphSearch(problem, util.PriorityQueue(), heuristic)
-    actions = graph.bestFirstSearch()
+    model = GenericSearch(problem, util.PriorityQueue(), heuristic)
+    actions = model.bestFirstSearch()
     return actions
 
 # Abbreviations
@@ -194,7 +194,7 @@ class Node:
         return f"{self.parent}->{self.state}"
 
 # Generic graph search
-class GraphSearch:
+class GenericSearch:
     def __init__(self, problem, fringe, heuristic=nullHeuristic):
         self.problem = problem
         self.fringe = fringe
