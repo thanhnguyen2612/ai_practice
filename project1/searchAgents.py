@@ -184,12 +184,12 @@ class PositionSearchProblem(search.SearchProblem):
         """
         Returns child states, the actions they require, and a cost of 1.
 
-         As noted in search.py:
-             For a given state, this should return a list of triples,
-         (child, action, stepCost), where 'child' is a
-         child to the current state, 'action' is the action
-         required to get there, and 'stepCost' is the incremental
-         cost of expanding to that child
+        As noted in search.py:
+            For a given state, this should return a list of triples,
+            (child, action, stepCost), where 'child' is a
+            child to the current state, 'action' is the action
+            required to get there, and 'stepCost' is the incremental
+            cost of expanding to that child
         """
 
         children = []
@@ -307,22 +307,32 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         # Please add any code here which you would like to use
         # in initializing the problem
-        "*** YOUR CODE HERE ***"
+        # For display purposes
+        self.visualize = True
+        self._visited, self._visitedlist = {}, []
 
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, self.corners)
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        isGoal = len(state[1]) == 0
+
+        # For display purposes only
+        if isGoal and self.visualize:
+            self._visitedlist.append(state[0])
+            import __main__
+            if '_display' in dir(__main__):
+                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
+                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
+
+        return isGoal
 
     def expand(self, state):
         """
@@ -334,14 +344,18 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that child
         """
-
         children = []
         for action in self.getActions(state):
-            # Add a child state to the child list if the action is legal
-            # You should call getActions, getActionCost, and getNextState.
-            "*** YOUR CODE HERE ***"
+            nextState = self.getNextState(state, action)
+            cost = self.getActionCost(state, action, nextState)
+            children.append((nextState, action, cost))
 
+        # Bookkeeping for display purposes
         self._expanded += 1 # DO NOT CHANGE
+        if state not in self._visited:
+            self._visited[state[0]] = True
+            self._visitedlist.append(state[0])
+
         return children
 
     def getActions(self, state):
@@ -366,10 +380,13 @@ class CornersProblem(search.SearchProblem):
         x, y = state[0]
         dx, dy = Actions.directionToVector(action)
         nextx, nexty = int(x + dx), int(y + dy)
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
         # you will need to replace the None part of the following tuple.
-        return ((nextx, nexty), None)
+        if (nextx, nexty) in state[1]:
+            corners = list(state[1])
+            corners.remove((nextx, nexty))
+            return ((nextx, nexty), tuple(corners))
+        return ((nextx, nexty), state[1])
 
     def getCostOfActionSequence(self, actions):
         """
