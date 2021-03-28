@@ -139,9 +139,8 @@ def depthLimitSearch(problem, limit=3):
     actions = model.search(limit)
     return actions
 
-def iterativeDeepeningSearch(problem):
-    limit = 100
-    for depth in range(limit):
+def iterativeDeepeningSearch(problem, max_depth=1000):
+    for depth in range(max_depth):
         model = GenericSearch(problem, util.Stack())
         actions = model.search(depth)
         if actions:
