@@ -37,12 +37,6 @@ class Map:
     def __init__(self):
         self.roads = []
     
-    def __eq__(self, other):
-        return self.roads == other.roads
-    
-    def __hash__(self):
-        return hash(str(self.roads))
-    
     def containsRoad(self, road):
         return any(road == r for r in self.roads)
 
@@ -53,31 +47,45 @@ class Map:
     def getAllRoads(self, city):
         return [road for road in self.roads if road.connect(city)]
 
-class MapNavigation:
+class MapNavigationProblem(search.SearchProblem):
+    """
+    Implement Search problem for Map navigation
+    """
     def __init__(self, map, from_city, to_city):
         self.map = map
         self.current_city = from_city
         self.destination = to_city
     
-    def __eq__(self, other):
-        return self.map == other.map \
-            and self.current_city == other.current_city \
-            and self.destination == other.destination
+    def getStartState(self):
+        return self.current_city
     
-    def __hash__(self):
-        return hash(map) + hash(self.current_city) + hash(self.destination)
+    def isGoalState(self, state):
+        return state == self.destination
+    
+    def expand(self, state):
+        for road in self.getActions(state):
+            next_state = self.getNextState(state, road)
+            yield (next_state, road, self.getActionCost(state, road, next_state))
+    
+    def getActions(self, state):
+        return self.map.getAllRoads(state)
+    
+    def getActionCost(self, state, action, next_state):
+        if not action.connect(state) and not action.connect(next_state):
+            raise Exception(f"{Action} not connect {state} with {next_state}")
+        return action.cost
 
-    def isGoal(self):
-        return self.current_city == self.destination
+    def getNextState(self, state, action):
+        return action.city1 if action.city2 == state else action.city2
 
-    def legalMoves(self):
-        return self.map.getAllRoads(self.current_city)
-
-    def result(self, road):
+    def getCostOfActionSequence(self, actions):
+        return sum(action.cost for action in actions)
+    
+    def getNextCity(self, road):
         if not road.connect(self.current_city):
             raise Exception("Invalid solution")
-        city = road.city1 if road.city2 == self.current_city else road.city2
-        return MapNavigation(self.map, city, self.destination)
+        self.current_city = road.city1 if road.city2 == self.current_city else road.city2
+        return self.current_city
 
 def loadMap():
     map = Map()
@@ -110,23 +118,20 @@ if __name__ == '__main__':
     if len(sys.argv) not in [3, 4]:
         sys.exit("Useage: python3 map_navigation.py from_city to_city bfs/dfs")
     map = loadMap()
-
-    map_navigation_problem = MapNavigation(map, sys.argv[1], sys.argv[2])
+    map_navigation_problem = MapNavigationProblem(map, sys.argv[1], sys.argv[2])
     if len(sys.argv) == 4 and sys.argv[3] == 'dfs':
         actions = search.dfs(map_navigation_problem)
-
-        city = []
-        cur = map_navigation_problem
+        cost = map_navigation_problem.getCostOfActionSequence(actions)
+        print(f"DFS found a path of {len(actions)} moves with {cost} costs")
+        city = [map_navigation_problem.current_city]
         for a in actions:
-            city.append(cur.current_city)
-            cur = cur.result(a)
+            city.append(map_navigation_problem.getNextCity(a))
         print('-'.join(city))
     else:
         actions = search.bfs(map_navigation_problem)
-        
-        city = []
-        cur = map_navigation_problem
+        cost = map_navigation_problem.getCostOfActionSequence(actions)
+        print(f"BFS found a path of {len(actions)} moves with {cost} costs")
+        city = [map_navigation_problem.current_city]
         for a in actions:
-            city.append(cur.current_city)
-            cur = cur.result(a)
+            city.append(map_navigation_problem.getNextCity(a))
         print('-'.join(city))
