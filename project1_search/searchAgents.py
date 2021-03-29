@@ -401,6 +401,12 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+def countWallsOnManhattanRoute(fromPos, toPos, walls):
+    way1 = sum(walls[fromPos[0]][j] for j in range(fromPos[1], toPos[1], util.sign(fromPos[1] - toPos[1])))
+    way2 = sum(walls[toPos[0]][j] for j in range(fromPos[1], toPos[1], util.sign(fromPos[1] - toPos[1])))
+    way1 += sum(walls[i][toPos[1]] for i in range(fromPos[0], toPos[0], util.sign(fromPos[0] - toPos[0])))
+    way2 += sum(walls[i][fromPos[1]] for i in range(fromPos[0], toPos[0], util.sign(fromPos[0] - toPos[0])))
+    return min(way1, way2)
 
 def cornersHeuristic(state, problem):
     """
@@ -415,11 +421,21 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    walls = problem.walls       # These are the walls of the maze, as a Grid (game.py)
+    curPos = state[0]           # Tracking the current position
+    corners = list(state[1])    # These are the corner coordinates
+    h = 0                       # Heuristic score
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    while corners != []:
+        distancesToGoals = [abs(curPos[0]-corner[0]) + abs(curPos[1]-corner[1]) \
+                            + countWallsOnManhattanRoute(curPos, corner, walls) \
+                            for corner in corners]
+
+        h, idx = h + min(distancesToGoals), distancesToGoals.index(min(distancesToGoals))
+        curPos = corners[idx]
+        del corners[idx]
+    
+    return h
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
