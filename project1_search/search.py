@@ -216,7 +216,7 @@ class GenericSearch:
                     node = node.parent
                 actions.reverse()
                 return actions
-            elif limit >= 0 and node.depth == limit:     # Cutoff
+            elif limit >= 0 and node.depth >= limit:     # Cutoff
                 self.explored.add(node.state)
                 continue
             
