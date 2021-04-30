@@ -5,14 +5,12 @@ import time
 import caro
 
 def initWindowSize(tile_size, num_rows, num_cols):
-    WIDTH, HEIGHT = 600, 600
-    width, height = tile_size * (num_cols + 2), tile_size * (num_rows + 2)
+    WIDTH = 500
+    width, height = tile_size * (num_cols + 1), tile_size * (num_rows + 1)
     if width < WIDTH:
         width = WIDTH
-        tile_size = WIDTH // (num_cols + 2)
-    if height < HEIGHT:
-        height = HEIGHT
-        tile_size = min(HEIGHT // (num_rows + 2), tile_size)
+        tile_size = WIDTH // (num_cols + 1)
+        height = tile_size * (num_rows + 1)
 
     return tile_size, width, height + 100
 
