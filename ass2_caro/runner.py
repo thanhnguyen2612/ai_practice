@@ -16,7 +16,7 @@ def initWindowSize(tile_size, num_rows, num_cols):
 
 pygame.init()
 tile_size = 40
-num_rows, num_cols = 12, 12
+num_rows, num_cols = 5, 5
 tile_size, width, height = initWindowSize(tile_size, num_rows, num_cols)
 
 size = (width, height)   # Window size
@@ -32,14 +32,13 @@ screen = pygame.display.set_mode(size)
 # Create fonts
 mediumFont = pygame.font.Font("OpenSans-Regular.ttf", 28)
 largeFont = pygame.font.Font("OpenSans-Regular.ttf", 40)
-moveFont = pygame.font.Font("OpenSans-Regular.ttf", 60)
+moveFont = pygame.font.Font("OpenSans-Regular.ttf", tile_size)
 
 # Init Caro game
-game = caro.Caro((num_rows, num_cols))
+game = caro.CaroGame((num_rows, num_cols))
 board = game.board
 user = None
 ai_turn = False
-
 
 #-------- Game loop -----------------
 while True:
@@ -108,11 +107,11 @@ while True:
             tiles.append(row)
         
         game_over = game.terminal()
-        player = game.next_player()
+        player = game.nextPlayer()
 
         # Show title
         if game_over:
-            winner = caro.winner()
+            winner = game.winner()
             if winner is None:
                 title = f"Game Over: Tie"
             else:
@@ -129,7 +128,7 @@ while True:
         # Check if AI move
         if user != player and not game_over:
             if ai_turn:
-                time.sleep(0.5)
+                # time.sleep(0.5)
                 # move = None
                 # game.action(move)
                 ai_turn = False
@@ -143,7 +142,7 @@ while True:
             for i in range(num_rows):
                 for j in range(num_cols):
                     if (board[i][j] == caro.EMPTY and tiles[i][j].collidepoint(mouse)):
-                        game.result((i, j))
+                        game.makeMove((i, j))
                         board = game.board
         
         if game_over:
@@ -159,7 +158,8 @@ while True:
                 if againButton.collidepoint(mouse):
                     time.sleep(0.2)
                     user = None
-                    board = game.reset().board
+                    game.reset()
+                    board = game.board
                     ai_turn = False
 
     pygame.display.flip()
