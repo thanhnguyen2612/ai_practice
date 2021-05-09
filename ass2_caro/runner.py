@@ -17,7 +17,7 @@ def initWindowSize(tile_size, num_rows, num_cols):
 
 pygame.init()
 tile_size = 40
-num_rows, num_cols = 3, 3
+num_rows, num_cols = 7, 7
 tile_size, width, height = initWindowSize(tile_size, num_rows, num_cols)
 
 size = (width, height)   # Window size
@@ -130,7 +130,7 @@ while True:
         if user != player and not game_over:
             if ai_turn:
                 # time.sleep(0.5)
-                move = AI.minimax(game.state)
+                move = AI.minimax_cutoff(game.state)
                 game.makeMove(move)
                 ai_turn = False
             else:

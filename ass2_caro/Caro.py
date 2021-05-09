@@ -8,7 +8,7 @@ X = "X"
 O = "O"
 EMPTY = "."
 
-WIN = 3             # Number of consecutive marks to win
+WIN = 5             # Number of consecutive marks to win
 
 # Enumeration of checking winning directions
 HORIZONTAL = 0
@@ -18,10 +18,16 @@ DIAGONAL_R = 3      # From top-right down to bottom-left
 
 SCORE = {X: 1, O: -1, EMPTY: 0}
 
+def manhattan_distance(pos1, pos2):
+    """
+    Compute manhattan distance between 2 2D positions
+    """
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
 class CaroState:
     def __init__(self, size):
         assert len(size) == 2, "Invalid board size (#_rows, #_cols)"
-        assert size[0] >= WIN and size[1] >= WIN, "Invalid caro game"
+        assert size[0] >= WIN or size[1] >= WIN, "Invalid caro game"
         self.n_rows, self.n_cols = size
         self.X_moves = set()
         self.O_moves = set()
@@ -143,6 +149,32 @@ class CaroState:
         return [(i, j) for i in range(self.n_rows)
                             for j in range(self.n_cols)
                                 if (i, j) not in self.X_moves.union(self.O_moves)]
+    
+    def topActions(self, n=10):
+        """
+        Get top 'n' legal moves
+        """
+        all_moves = self.actions()
+
+        evals = [self.result(move).eval() for move in all_moves]
+        sorted_moves = [move for move, _ in sorted(zip(all_moves, evals),
+                                                   key=lambda x: x[1],
+                                                   reverse=(self.player() == X))]
+        
+        return sorted_moves if n >= len(all_moves) else sorted_moves[:n]
+    
+    def localActions(self, expand=1):
+        marked = self.markedMoves()
+        if len(marked) == 0:
+            return [(self.n_rows // 2, self.n_cols // 2)]
+        minR = max(min(m[0] for m in marked) - expand, 0)
+        maxR = min(max(m[0] for m in marked) + expand, self.n_rows - 1)
+        minC = max(min(m[1] for m in marked) - expand, 0)
+        maxC = min(max(m[1] for m in marked) + expand, self.n_cols - 1)
+
+        all_moves = self.actions()
+        return list(filter(lambda m: m[0] >= minR and m[0] <= maxR and
+                                     m[1] >= minC and m[1] <= maxC, all_moves))
 
     def result(self, move):
         if move in self.X_moves or move in self.O_moves:
@@ -196,15 +228,90 @@ class CaroState:
     def utility(self):
         player_win = self.winner()
         if player_win == X:
-            return 1
+            return 100000
         elif player_win == O:
-            return -1
+            return -100000
         return 0
+    
+    def _evalPattern(self, repr):
+        """
+        @Params:
+            repr: Get ASCII representation of a direction
+        @Return:
+            evaluation score of the pattern
+        """
+        if X not in repr and O not in repr: return 0
+        def scorePattern(repr, pattern, player):
+            if len(pattern.group(0)) < 5:
+                return 0
+            elif len(pattern.group(0)) == 5:
+                s, e = pattern.start(), pattern.end()
+                if s > 0 and e < len(repr):
+                    if repr[s - 1] not in [player, EMPTY] and\
+                       repr[e] not in [player, EMPTY]:
+                       return 0
+
+            p_str = pattern.group(0)
+            consec_scores = (2, 5, 1000, 10000)
+            score, cons = 0, 0
+            for p in p_str:
+                if p != EMPTY:
+                    cons += 1
+                elif cons > 0 and cons < 5:
+                    score += consec_scores[cons - 1]
+                    cons = 0
+                else:
+                    cons = 0
+
+            if cons > 0 and cons < 4:
+                score += consec_scores[cons - 1]
+            return score
+
+        eval_score = 0
+
+        # Score X
+        X_ext = re.compile(r"[X.]+")
+        for pattern in X_ext.finditer(repr):
+            eval_score += scorePattern(repr, pattern, X)
+        
+        # Score O
+        O_ext = re.compile(r"[O.]+")
+        for pattern in O_ext.finditer(repr):
+            eval_score -= scorePattern(repr, pattern, O)
+        
+        return eval_score
+    
+    def eval(self):
+        if self.terminal():
+            return self.utility()
+
+        eval_score = 0
+        # Check all rows
+        for i in range(self.n_rows):
+            repr = self.getASCIIRepr((i, 0), HORIZONTAL)
+            eval_score += self._evalPattern(repr)
+
+        # Check all columns
+        for i in range(self.n_cols):
+            repr = self.getASCIIRepr((0, i), VERTICAL)
+            eval_score += self._evalPattern(repr)
+
+        # Check all diagonal left
+        for i in range(self.n_rows + self.n_cols - WIN * 2 + 1):
+            repr = self.getASCIIRepr((i, self.n_cols - WIN), DIAGONAL_L)
+            eval_score += self._evalPattern(repr)
+
+        # Check all diagonal right
+        for i in range(self.n_rows + self.n_cols - WIN * 2 + 1):
+            repr = self.getASCIIRepr((i, WIN - 1), DIAGONAL_R)
+            eval_score += self._evalPattern(repr)
+        
+        return eval_score
 
 class CaroGame:
     def __init__(self, size):
         assert len(size) == 2, "Invalid board size (#_rows, #_cols)"
-        assert size[0] >= WIN and size[1] >= WIN, "Invalid caro game"
+        assert size[0] >= WIN or size[1] >= WIN, "Invalid caro game"
 
         self.n_rows, self.n_cols = size     # n_rows, n_cols: # of rows & cols, respectively
         self.state = CaroState(size)        # state: current state of caro game
