@@ -2,7 +2,8 @@ import pygame
 import sys
 import time
 
-import caro
+import Caro
+import ai_agent as AI
 
 def initWindowSize(tile_size, num_rows, num_cols):
     WIDTH = 500
@@ -16,7 +17,7 @@ def initWindowSize(tile_size, num_rows, num_cols):
 
 pygame.init()
 tile_size = 40
-num_rows, num_cols = 5, 5
+num_rows, num_cols = 3, 3
 tile_size, width, height = initWindowSize(tile_size, num_rows, num_cols)
 
 size = (width, height)   # Window size
@@ -35,8 +36,8 @@ largeFont = pygame.font.Font("OpenSans-Regular.ttf", 40)
 moveFont = pygame.font.Font("OpenSans-Regular.ttf", tile_size)
 
 # Init Caro game
-game = caro.CaroGame((num_rows, num_cols))
-board = game.board
+game = Caro.CaroGame((num_rows, num_cols))
+board = game.getBoard()
 user = None
 ai_turn = False
 
@@ -77,10 +78,10 @@ while True:
             mouse = pygame.mouse.get_pos()
             if playXButton.collidepoint(mouse):
                 time.sleep(0.2)
-                user = caro.X
+                user = Caro.X
             elif playOButton.collidepoint(mouse):
                 time.sleep(0.2)
-                user = caro.O
+                user = Caro.O
     
     else:
         # Draw game board
@@ -98,7 +99,7 @@ while True:
                 )
                 pygame.draw.rect(screen, WHITE, rect, 3)
 
-                if board[i][j] != caro.EMPTY:
+                if board[i][j] != Caro.EMPTY:
                     move = moveFont.render(board[i][j], True, WHITE)
                     moveRect = move.get_rect()
                     moveRect.center = rect.center
@@ -129,11 +130,20 @@ while True:
         if user != player and not game_over:
             if ai_turn:
                 # time.sleep(0.5)
-                # move = None
-                # game.action(move)
+                move = AI.minimax(game.state)
+                game.makeMove(move)
                 ai_turn = False
             else:
                 ai_turn = True
+            # click, _, _ = pygame.mouse.get_pressed()
+            # if click == 1:
+            #     mouse = pygame.mouse.get_pos()
+            #     for i in range(num_rows):
+            #         for j in range(num_cols):
+            #             if (board[i][j] == Caro.EMPTY and tiles[i][j].collidepoint(mouse)):
+            #                 # Update game state
+            #                 game.makeMove((i, j))
+            #                 board = game.getBoard()
         
         # Check for a user move
         click, _, _ = pygame.mouse.get_pressed()
@@ -141,9 +151,10 @@ while True:
             mouse = pygame.mouse.get_pos()
             for i in range(num_rows):
                 for j in range(num_cols):
-                    if (board[i][j] == caro.EMPTY and tiles[i][j].collidepoint(mouse)):
+                    if (board[i][j] == Caro.EMPTY and tiles[i][j].collidepoint(mouse)):
+                        # Update game state
                         game.makeMove((i, j))
-                        board = game.board
+                        board = game.getBoard()
         
         if game_over:
             againButton = pygame.Rect(width / 3, height - 65, width / 3, 50)
@@ -159,7 +170,7 @@ while True:
                     time.sleep(0.2)
                     user = None
                     game.reset()
-                    board = game.board
+                    board = game.getBoard()
                     ai_turn = False
 
     pygame.display.flip()
