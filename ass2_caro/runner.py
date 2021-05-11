@@ -17,7 +17,7 @@ def initWindowSize(tile_size, num_rows, num_cols):
 
 pygame.init()
 tile_size = 40
-num_rows, num_cols = 7, 7
+num_rows, num_cols = 12, 12
 tile_size, width, height = initWindowSize(tile_size, num_rows, num_cols)
 
 size = (width, height)   # Window size

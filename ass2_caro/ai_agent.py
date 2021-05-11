@@ -39,7 +39,8 @@ def min_value(state, alpha, beta):
 
 ######################### Cut-off search #############################################
 def minimax_cutoff(state):
-    actions = state.localActions()
+    # actions = state.localActions()
+    actions = state.topActions()
 
     alpha, beta = -1000000, 1000000
     depth = 3
@@ -54,8 +55,9 @@ def max_value_eval(state, alpha, beta, depth):
     if depth == 0:
         return state.eval()
     
-    v = -10000
-    for action in state.localActions():
+    v = -10000000
+    # for action in state.localActions():
+    for action in state.topActions():
         v = max(v, min_value_eval(state.result(action), alpha, beta, depth - 1))
         if v >= beta:
             return v
@@ -66,8 +68,9 @@ def min_value_eval(state, alpha, beta, depth):
     if depth == 0:
         return state.eval()
     
-    v = 10000
-    for action in state.localActions():
+    v = 10000000
+    # for action in state.localActions():
+    for action in state.topActions():
         v = min(v, max_value_eval(state.result(action), alpha, beta, depth - 1))
         if v <= alpha:
             return v

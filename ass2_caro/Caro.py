@@ -146,17 +146,18 @@ class CaroState:
         return O if len(self.X_moves) > len(self.O_moves) else X
     
     def actions(self):
+        marked_moves = self.markedMoves()
         return [(i, j) for i in range(self.n_rows)
                             for j in range(self.n_cols)
-                                if (i, j) not in self.X_moves.union(self.O_moves)]
+                                if (i, j) not in marked_moves]
     
     def topActions(self, n=10):
         """
         Get top 'n' legal moves
         """
         all_moves = self.actions()
+        evals = list(map(lambda move: self.result(move).eval(), all_moves))
 
-        evals = [self.result(move).eval() for move in all_moves]
         sorted_moves = [move for move, _ in sorted(zip(all_moves, evals),
                                                    key=lambda x: x[1],
                                                    reverse=(self.player() == X))]
@@ -228,9 +229,9 @@ class CaroState:
     def utility(self):
         player_win = self.winner()
         if player_win == X:
-            return 100000
+            return 10000000
         elif player_win == O:
-            return -100000
+            return -10000000
         return 0
     
     def _evalPattern(self, repr):
@@ -254,9 +255,10 @@ class CaroState:
             # Score barem
             consec_scores = (2, 5, 1000, 10000)
             block_weight = (0.5, 0.6, 0.01, 0.25)
+            not_current_weight = (1, 1, 0.2, 0.15)
 
             p_str = pattern.group(0)
-            score, cons = 0, 0
+            score, cons, max_cons = 0, 0, 0
 
             # Count for number of consecutive
             block = True
@@ -264,11 +266,13 @@ class CaroState:
                 if p != EMPTY:
                     cons += 1
                 elif cons > 0 and cons < 5:
+                    temp = not_current_weight[cons - 1] if self.player() != player else 1
                     if block:
-                        score += consec_scores[cons - 1] * block_weight[cons - 1]
+                        temp *= consec_scores[cons - 1] * block_weight[cons - 1]
                         block = False
                     else:
-                        score += consec_scores[cons - 1]
+                        temp *= consec_scores[cons - 1]
+                    score += temp
                     cons = 0
                 else:
                     block = False
@@ -276,14 +280,14 @@ class CaroState:
 
             # Last mark is PLAYER
             if cons > 0 and cons < 5:
+                temp = not_current_weight[cons - 1] if self.player() != player else 1
                 if e < len(repr):
-                    score += consec_scores[cons - 1] * block_weight[cons - 1]
+                    temp *= consec_scores[cons - 1] * block_weight[cons - 1]
                 else:
-                    score += consec_scores[cons - 1]
-
+                    temp *= consec_scores[cons - 1]
+                score += temp
+            
             return score
-
-        weight = (0.3, 0.7)     # Weight on current player
 
         # Score X
         X_ext = re.compile(r"[X.]+")
@@ -297,7 +301,7 @@ class CaroState:
         for pattern in O_ext.finditer(repr):
             eval_O -= scorePattern(repr, pattern, O)
         
-        eval_score = eval_X * weight[self.player() == X] + eval_O * weight[self.player() == O]
+        eval_score = eval_X + eval_O
         return eval_score
     
     def eval(self):
